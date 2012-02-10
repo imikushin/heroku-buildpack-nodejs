@@ -18,7 +18,7 @@ function indent() {
 
 run_npm() {
   command="$1"
-  HOME="$BUILD_DIR" $VENDORED_NODE/bin/node $VENDORED_NPM/cli.js $command 2>&1 | indent
+  HOME="$BUILD_DIR" $VENDORED_NODE/bin/node $VENDORED_NODE/bin/npm $command 2>&1 | indent
 
   if [ "${PIPESTATUS[*]}" != "0 0" ]; then
     echo " !     Failed to $command dependencies with npm"
@@ -30,8 +30,7 @@ run_npm() {
 unset GIT_DIR
 
 # config
-NODE_VERSION="0.6.9"
-NPM_VERSION="1.1.0-2"
+NODE_VERSION="0.6.10"
 SCONS_VERSION="1.2.0"
 S3_BUCKET="4heroku"
 
@@ -39,23 +38,20 @@ S3_BUCKET="4heroku"
 BUILD_DIR=$1
 CACHE_DIR=$2
 LP_DIR=`cd $(dirname $0); cd ..; pwd`
-CACHE_STORE_DIR="$CACHE_DIR/node_modules/$NPM_VERSION"
+CACHE_STORE_DIR="$CACHE_DIR/node_modules"
 CACHE_TARGET_DIR="$BUILD_DIR/node_modules"
 
 # s3 packages
 NODE_PACKAGE="http://${S3_BUCKET}.s3.amazonaws.com/nodejs-${NODE_VERSION}.tgz"
-NPM_PACKAGE="http://${S3_BUCKET}.s3.amazonaws.com/npm-${NPM_VERSION}.tgz"
 SCONS_PACKAGE="http://${S3_BUCKET}.s3.amazonaws.com/scons-${SCONS_VERSION}.tgz"
 
 # vendor directories
 VENDORED_NODE="$(mktmpdir node)"
-VENDORED_NPM="$(mktmpdir npm)"
 VENDORED_SCONS="$(mktmpdir scons)"
 
 # download and unpack packages
 echo "-----> Fetching Node.js binaries"
 mkdir -p $VENDORED_NODE  && curl $NODE_PACKAGE -s -o -  | tar xzf - -C $VENDORED_NODE
-mkdir -p $VENDORED_NPM   && curl $NPM_PACKAGE -s -o -   | tar xzf - -C $VENDORED_NPM
 mkdir -p $VENDORED_SCONS && curl $SCONS_PACKAGE -s -o - | tar xzf - -C $VENDORED_SCONS
 
 # vendor node into the slug
@@ -93,7 +89,7 @@ if [ -d $CACHE_STORE_DIR ]; then
 fi
 
 # install dependencies with npm
-echo "-----> Installing dependencies with npm $NPM_VERSION"
+echo "-----> Installing dependencies with npm"
 
 cd $BUILD_DIR
 run_npm install
